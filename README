@@ -54,7 +54,8 @@ TODO:
     measurement on the network.
   - I haven't really looked through the HTTP server code, so I need to
     take a sweep and refactor some or most of it.
-
+  - Handle signals from killall gracefully. Currently zombie processes are
+    created and files are not properly closed.
 
 The HTTP server (in the file called httpserver) implements a caching policy
 under a 10MB memory constraint. The caching methodology keeps track of the

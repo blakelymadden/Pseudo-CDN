@@ -19,8 +19,10 @@
 #include <netinet/in.h>
 #include <stdio.h>
 
-int FILE_OFF = 0;
-FILE *IP_FILE = NULL;
+// these are temporarily global variables for the purpose of avoiding extra
+// reads/writes from/to disk. Should possibly be refactored.
+static int FILE_OFF = 0;
+static FILE *IP_FILE = NULL;
 
 /**
  * function to form a network ready dns header
@@ -171,6 +173,11 @@ void get_question(int port) {
   if ((binded = bind(sockfd, (struct sockaddr*)&in, in_size)) < 0)
     perror("bind");
 
+  /* This loop a crude way of making this program a dns daemon.
+   * There is no graceful exit from this, currently, and that has the
+   * consequence of not closing IP_FILE and possibly leaving a zombie
+   * process on the hosting server. Should be refactored.
+   */
   while (1) {
     FD_ZERO(&socks);
     FD_SET(sockfd, &socks);
