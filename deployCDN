@@ -1,0 +1,28 @@
+#!/bin/bash
+
+port=$2
+origin=$4
+name=$6
+username=$8
+keyfile=${@: -1:1}
+ipfile="./hosts/nodes.txt"
+remotepath="cdn/"
+dnsserv="cs5700cdnproject.ccs.neu.edu"
+
+filelines=`cat $ipfile`
+
+for line in $filelines
+do
+    ip=$line
+    echo "Deploying to remote host: $ip"
+    ssh -i $keyfile $username@$ip "mkdir $remotepath; exit"
+    scp -i $keyfile * $username@$ip:~/$remotepath
+    ssh -i $keyfile $username@$ip "cd $remotepath; make; exit"
+done
+
+echo "Deploying to DNS Server: %dnsserv"
+ssh -i $keyfile $username@$dnsserv "mkdir $remotepath; exit"
+scp -r -i $keyfile . $username@$dnsserv:~/$remotepath
+ssh -i $keyfile $username@$dnsserv "cd $remotepath; make; exit"
+
+echo "Software deployed."

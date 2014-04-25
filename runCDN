@@ -1,0 +1,24 @@
+#!/bin/bash
+
+port=$2
+origin=$4
+name=$6
+username=$8
+keyfile=${@: -1:1}
+ipfile="./hosts/nodes.txt"
+remotepath="cdn/"
+dnsserv="cs5700cdnproject.ccs.neu.edu"
+
+filelines=`cat $ipfile`
+
+for line in $filelines
+do
+    ip=$line
+    echo "Server up @ $ip"
+    ssh -i $keyfile $username@$ip "cd $remotepath; nohup ./httpserver -p $port -o $origin > /dev/null 2>&1 &"
+done
+
+echo "DNS Server up @ $dnsserv"
+ssh -i $keyfile $username@$dnsserv "cd $remotepath; nohup ./dnsserver -p $port -n $name > blah 2>&1 &"
+
+echo "All servers up."

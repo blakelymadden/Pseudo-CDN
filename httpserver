@@ -1,0 +1,89 @@
+#!/usr/bin/python
+
+#####################################################################
+# Simple HTTP server that redirects incoming get requests to the    #
+# Origin server passed in as the <origin> argument.                 #
+#                                                                   #
+# Written primarily by Zachary Benevento                            #
+#####################################################################
+
+import BaseHTTPServer
+import SocketServer
+import httplib
+from sys import *
+
+PORT = 0
+ORIGIN = ""
+WIKI_CACHE = {}
+HIT_CACHE = {}
+SIZE_OF_CACHE = 0
+
+# Cache the pages if we have room
+# Otherwise, make room by getting rid of the least accessed pages first
+def cache_content(key, value):
+	global WIKI_CACHE
+	global HIT_CACHE
+	global SIZE_OF_CACHE
+	content = {str(key):str(value)}
+	hits = {str(key):1}
+	if (SIZE_OF_CACHE + getsizeof(value)) < 10000000:
+		WIKI_CACHE.update(content)
+		HIT_CACHE.update(hits)
+		SIZE_OF_CACHE = SIZE_OF_CACHE + getsizeof(value)
+	else: 
+		SIZE_OF_CACHE = SIZE_OF_CACHE - getsizeof(WIKI_CACHE[min(HIT_CACHE, key=HIT_CACHE.get)])
+		del WIKI_CACHE[min(HIT_CACHE, key=HIT_CACHE.get)]
+		del HIT_CACHE[min(HIT_CACHE, key=HIT_CACHE.get)]
+		cache_content(key, value)
+
+# Fetch uncached pages from the origin server and then cache them
+def fetch_from_origin(path):
+	global ORIGIN
+	c = httplib.HTTPConnection(ORIGIN);
+	c.request("GET", path)
+	response = c.getresponse();
+	data = response.read()
+	cache_content(path, data)
+	return data
+
+# Handles get requests
+class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+	def do_GET(s):
+		global WIKI_CACHE
+		global HIT_CACHE
+		global SIZE_OF_CACHE
+		print "Requesting content..."
+		s.send_response(200)
+		s.send_header('Content-type', 'text/html')
+		s.end_headers()
+		if WIKI_CACHE.has_key(s.path):
+			HIT_CACHE[s.path] = (HIT_CACHE.get(s.path)+1)
+			s.wfile.write(WIKI_CACHE.get(s.path))
+		else: 
+			s.wfile.write(fetch_from_origin(s.path))
+
+# Starts the server
+def run(server_class=BaseHTTPServer.HTTPServer, handler_class=BaseHTTPServer.BaseHTTPRequestHandler):
+	global PORT
+	global ORIGIN
+	httpd = server_class(('', PORT), HTTPHandler)
+	print "Server running..."
+	httpd.serve_forever()
+
+def main():
+	global PORT
+	global ORIGIN
+	if len(argv) != 5:
+		print "Usage: ./httpserver -p [port] -o [origin]"
+		exit(1)
+	PORT = int(argv[2])
+	#PORT = 50000
+	ORIGIN = argv[4]
+        print ORIGIN[-5:-1]
+        if ORIGIN[-5:-1] != "8080":
+                ORIGIN = ORIGIN + ":8080"
+	#ORIGIN = "54.85.79.138:8080"
+	run()
+	
+if __name__ == "__main__":
+    main()

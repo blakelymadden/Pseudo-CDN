@@ -1,0 +1,24 @@
+#!/bin/bash
+
+port=$2
+origin=$4
+name=$6
+username=$8
+keyfile=${@: -1:1}
+ipfile="./hosts/nodes.txt"
+remotepath="cdn/"
+dnsserv="cs5700cdnproject.ccs.neu.edu"
+
+filelines=`cat $ipfile`
+
+for line in $filelines
+do
+    echo "Removing from $ip"
+    ip=$line
+    ssh -i $keyfile $username@$ip "rm -rfv $remotepath; exit"
+done
+
+echo "Removing from DNS Server: $dnsserv"
+ssh -i $keyfile $username@$dnsserv "rm -rf $remotepath; exit"
+
+echo "Software removed from remote hosts."

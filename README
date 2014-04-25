@@ -1,0 +1,66 @@
+This repository contains a framework for rolling your own pseudo-CDN given you
+have access to available servers.
+
+Requirements:
+  - An "origin" server that contains web content to be fetched
+  - One or more server nodes that you have user level access to
+  - One server to host a DNS Server (provided in the framework)
+  - POSIX compliant machines
+
+Bash scripts, for easy deployment, running, stopping, and removal of software
+to remote servers, are provided. In order to use these scripts effectively,
+and without (much) modification, the following usage applies:
+  - ./[run|stop|deploy|remove]CDN -p <port> -o <origin> -n <ipfile> -u
+    <username> -i <ssh-keyfile>
+  - Modification of the "dnsserv" variable in each script is required. The
+    current URL will not work for non Northeastern students.
+  - In order to use these scripts, you must first copy your public SSH
+    key to ~/.ssh/authorized_keys on each remote server. In order to make this
+    as easy as possible, I've included a script for ssh key distribution from
+    your local machine.
+  - Finally, you must use the same username for each remote machine if you
+    want to use these scripts effectively. You can modify these scripts, or
+    manually deploy the code if you are unable to meet this requirement.
+
+After running the deploy script followed by the run script, you can test
+the network by using the following sequence of commands:
+    IP=`dig +short -p <port # used in scripts> @<dnsserver>
+            someurl.example.com | head -1`
+    (you should receive the IP address of one of the nodes in your network)
+    wget $IP/<path to some page on origin server>:<port # used in scripts>
+You now have a file in your directory with the name of the webpage you
+queried.
+
+You might be thinking to yourself, "Hey, nobody browses the web like this,
+what gives?" Well this process is basically what happens behind the curtains
+when you use a web browser to navigate to pages being served by a CDN. Since
+this is just an experiment for me to get my feet wet in this whole domain,
+it doesn't support the UX features of a real CDN.
+
+Pseudo-CDN is basically useless in practice, but it serves as an experiment
+in understanding how CDNs work in the real world. This is a simplified
+version of a CDN, but the core components of a real CDN are present. Namely,
+this framework implements a DNS server that redirects questions to a server
+in the CDN that is chosen as the best server to fulfill that request
+(the current implementation simply distributes requests evenly among the
+machines in the CDN - obviously not a real solution to finding the server
+with the best response time. This is just a placeholder until a real policy
+is implemented). A real policy will take an active measurement approach to
+actually keep track of which server will decrease lookup time for a given
+client.
+
+TODO:
+  - Reimplement the DNS redirection policy to support some form of active
+    measurement on the network.
+  - I haven't really looked through the HTTP server code, so I need to
+    take a sweep and refactor some or most of it.
+
+
+The HTTP server (in the file called httpserver) implements a caching policy
+under a 10MB memory constraint. The caching methodology keeps track of the
+most requested pages and uses an eviction policy based on these numbers.
+This enables faster lookup time for highly requested pages.
+
+httpserver is written primarily by github.com/zachnu with some minor
+modifications by github.com/blakelymadden. Everything else is written by
+github.com/blakelymadden
