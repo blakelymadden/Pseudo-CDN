@@ -19,6 +19,6 @@ do
 done
 
 echo "Removing from DNS Server: $dnsserv"
-ssh -i $keyfile $username@$dnsserv "rm -rf $remotepath; exit"
+ssh -i $keyfile $username@$dnsserv "rm -rfv $remotepath; exit"
 
 echo "Software removed from remote hosts."
