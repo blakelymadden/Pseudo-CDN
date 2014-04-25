@@ -1,8 +1,6 @@
-54.84.248.26
-54.186.185.27
-54.215.216.108
-54.72.143.213
-54.255.143.38
-54.199.204.174
-54.206.102.208
-54.207.73.134
+# You should fill this file with the IPv4 addresses of the http servicing
+# nodes in your CDN
+# For example:
+1.1.1.1
+1.1.1.2
+127.0.0.1
